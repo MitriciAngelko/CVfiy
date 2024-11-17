@@ -9,11 +9,11 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">
-          Bine ați venit la sistemul nostru de rezervări
+          Bine ați venit la sistemul nostru de generare CV
         </h1>
         
         <p className="text-xl text-gray-600 text-center mb-12">
-          Alegeți metoda preferată pentru a face o rezervare
+          Alegeți metoda preferată pentru a crea un CV personalizat
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
@@ -27,16 +27,17 @@ const HomePage = () => {
                 <FileText size={48} className="text-blue-600" />
               </div>
               <h3 className="text-2xl font-semibold text-gray-800">
-                Rezervare prin Formular
+                Creare CV Prin Formular
               </h3>
               <p className="text-gray-600 text-center">
-                Completați un formular simplu pentru a face rezervarea dvs.
+                Completați un formular simplu pentru a genera un CV personalizat.
               </p>
             </div>
           </button>
 
           {/* Buton pentru rezervare conversațională */}
           <button
+            onClick={() => navigate('/chat')}
             className="group relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
           >
             <div className="flex flex-col items-center space-y-4">
@@ -44,10 +45,10 @@ const HomePage = () => {
                 <MessageSquare size={48} className="text-green-600" />
               </div>
               <h3 className="text-2xl font-semibold text-gray-800">
-                Rezervare Conversațională
+                Creare CV Conversațională
               </h3>
               <p className="text-gray-600 text-center">
-                Discutați cu asistentul nostru virtual pentru a face o rezervare
+                Discutați cu asistentul nostru virtual pentru a genera un CV personalizat.
               </p>
             </div>
           </button>

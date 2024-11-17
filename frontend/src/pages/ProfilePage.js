@@ -1,48 +1,85 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { User, FileText } from 'lucide-react';
+import { getMyCVs, downloadCV } from '../services/api';
+import CVCard from '../components/CVCard';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase'; // Importă auth din firebase
-import { logoutUser } from '../firebase'; // Importă funcția de logout
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState(null);
+  const user = useSelector((state) => state.auth.user);
+  const [cvs, setCvs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Obține informațiile despre utilizator din localStorage sau Firebase
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user')); // Încarcă utilizatorul din localStorage
-    if (user) {
-      setUserInfo(user);
-    } else {
-      // Dacă nu există utilizator logat, redirecționează la login
-      navigate('/login');
-    }
-  }, [navigate]);
+    const fetchCVs = async () => {
+      try {
+        const response = await getMyCVs(user.token);
+        setCvs(response.cvs);
+      } catch (error) {
+        console.error('Error fetching CVs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Funcția de logout
-  const handleLogout = async () => {
+    if (user?.token) {
+      fetchCVs();
+    }
+  }, [user]);
+
+  const handleDownload = async (cvId, pdfUrl) => {
     try {
-      await logoutUser();
-      localStorage.removeItem('user'); // Înlătură datele utilizatorului din localStorage
-      navigate('/login'); // Redirecționează către pagina de login
+      await downloadCV(user.token, cvId, pdfUrl);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Error downloading CV:', error);
     }
   };
 
   return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="bg-blue-100 p-4 rounded-full">
+              <User size={40} className="text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
+              <p className="text-gray-600">{user?.email}</p>
+            </div>
+          </div>
+        </div>
 
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Your Profile</h1>
-        {userInfo ? (
-          <div className="mt-4">
-            <p className="text-xl">Welcome, {userInfo.email}!</p>
-            <p className="mt-2 text-lg">UID: {userInfo.uid}</p>
-            <p className="mt-2 text-lg">Token: {userInfo.token}</p>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Your CVs</h2>
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : cvs?.length > 0 ? (
+          <div className="grid md:grid-cols-2 gap-6">
+            {cvs.map((cv) => (
+              <CVCard 
+                key={cv.id}
+                cv={cv}
+                onDownload={handleDownload}
+              />
+            ))}
           </div>
         ) : (
-          <p>Loading...</p>
+          <div className="text-center py-10 bg-white rounded-lg shadow-md">
+            <p className="text-gray-600 mb-4">Nu ai creat niciun CV încă.</p>
+            <button
+              onClick={() => navigate('/home')}
+              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              <FileText className="w-5 h-5 mr-2" />
+              Creează primul tău CV
+            </button>
+          </div>
         )}
       </div>
+    </div>
   );
 };
 

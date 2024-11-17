@@ -210,7 +210,7 @@ const MultiStepForm = () => {
         }
   
         // Încercăm să descărcăm PDF-ul prin backend
-        await downloadCV(user.token, response.cvId, response.pdfUrl);
+        // await downloadCV(user.token, response.cvId, response.pdfUrl);
   
         // Salvăm în localStorage
         localStorage.setItem('cvFormData', JSON.stringify(formData));

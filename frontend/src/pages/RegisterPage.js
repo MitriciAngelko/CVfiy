@@ -13,15 +13,17 @@ const RegisterPage = () => {
     e.preventDefault();
     try {
       const action = await dispatch(register({ email, password }));
-      
-      // Verifică dacă acțiunea s-a finalizat cu succes
       if (register.fulfilled.match(action)) {
-        // Dacă înregistrarea a fost realizată cu succes, redirecționează către pagina de login
         navigate('/home');
       }
     } catch (error) {
       console.error('Registration failed:', error);
     }
+  };
+
+  const handleLoginClick = (e) => {
+    e.preventDefault(); // Prevenim comportamentul implicit
+    navigate('/login');
   };
 
   return (
@@ -51,9 +53,9 @@ const RegisterPage = () => {
           </button>
         </form>
         <p className="mt-4 text-center">
-          Already have an account? 
+          Already have an account?{' '}
           <button
-            onClick={() => navigate('/login')}
+            onClick={handleLoginClick}
             className="text-blue-500 hover:text-blue-700 font-semibold"
           >
             Login here

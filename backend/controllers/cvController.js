@@ -1,8 +1,12 @@
 const db = require('../config/firebase').firestore();
 const pdfService = require('../services/pdfService');
 const axios = require('axios');
+const admin = require('firebase-admin');
 
 const MAX_CVS_PER_USER = 5;
+
+const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
+const bucket = bucketName ? admin.storage().bucket(bucketName) : null;
 
 const createCv = async (req, res) => {
   try {
@@ -75,6 +79,58 @@ const downloadCv = async (req, res) => {
       res.status(500).json({ message: 'Error downloading CV' });
     }
   };
+
+
+  const getUserCvs = async (req, res) => {
+    try {
+      const { uid } = req.user;
+  
+      // Obține toate CV-urile utilizatorului din Firestore
+      const cvSnapshot = await db.collection('cvs')
+        .where('userId', '==', uid)
+        .orderBy('createdAt', 'desc')
+        .get();
+  
+      const cvs = [];
+      
+      // Procesează fiecare CV și generează URL-uri noi pentru PDF-uri
+      for (const doc of cvSnapshot.docs) {
+        const cvData = doc.data();
+        
+        // Dacă CV-ul are un PDF asociat, generează un nou URL valid
+        if (cvData.pdfUrl) {
+          const fileName = `cvs/${uid}/${doc.id}.pdf`;
+          const file = bucket.file(fileName);
+          
+          try {
+            // Generează un nou URL valid pentru o oră
+            const [url] = await file.getSignedUrl({
+              action: 'read',
+              expires: Date.now() + 3600000 // 1 oră
+            });
+            cvData.pdfUrl = url;
+          } catch (error) {
+            console.error(`Error generating URL for CV ${doc.id}:`, error);
+            cvData.pdfUrl = null; // În caz că fișierul nu mai există
+          }
+        }
+  
+        cvs.push({
+          id: doc.id,
+          ...cvData
+        });
+      }
+  
+      res.status(200).json({
+        message: 'CVs retrieved successfully',
+        cvs: cvs
+      });
+    } catch (error) {
+      console.error('Error fetching CVs:', error.message);
+      res.status(500).json({ message: 'Error fetching CVs', error: error.message });
+    }
+  };
+  
   
 
-module.exports = { createCv, downloadCv };
+module.exports = { createCv, downloadCv, getUserCvs };

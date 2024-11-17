@@ -2,13 +2,17 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { auth } from '../firebase';
 import { setUser, logout } from '../redux/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const AuthContext = createContext();
+
+// Definim rutele publice care nu necesită autentificare
+const PUBLIC_ROUTES = ['/login', '/register'];
 
 const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +25,6 @@ const AuthProvider = ({ children }) => {
           uid: user.uid,
           email: user.email,
           token: token,
-          // Adaugă aici orice alte câmpuri relevante
         };
 
         // Actualizează Redux
@@ -33,14 +36,17 @@ const AuthProvider = ({ children }) => {
         // Utilizatorul nu este autentificat
         dispatch(logout());
         localStorage.removeItem('user');
-        navigate('/login');
+        
+        // Verificăm dacă suntem pe o rută care necesită autentificare
+        if (!PUBLIC_ROUTES.includes(location.pathname)) {
+          navigate('/login');
+        }
       }
       setLoading(false);
     });
 
-    // Cleanup la unmount
     return () => unsubscribe();
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, location]);
 
   // Token refresh periodic
   useEffect(() => {
@@ -48,7 +54,7 @@ const AuthProvider = ({ children }) => {
       const currentUser = auth.currentUser;
       if (currentUser) {
         try {
-          const token = await currentUser.getIdToken(true); // forțează reînnoirea token-ului
+          const token = await currentUser.getIdToken(true);
           const userData = JSON.parse(localStorage.getItem('user'));
           if (userData) {
             const updatedUserData = {
@@ -62,13 +68,13 @@ const AuthProvider = ({ children }) => {
           console.error('Error refreshing token:', error);
         }
       }
-    }, 10 * 60 * 1000); // Verifică la fiecare 10 minute
+    }, 10 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
 
   if (loading) {
-    return <div>Loading...</div>; // sau un component de loading
+    return <div>Loading...</div>;
   }
 
   return (
