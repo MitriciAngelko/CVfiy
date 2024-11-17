@@ -10,29 +10,16 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);  // Folosește auth
-      const user = userCredential.user;
-
-      // Salvează datele utilizatorului în localStorage
-      localStorage.setItem('user', JSON.stringify({
-        uid: user.uid,
-        email: user.email,
-        token: await user.getIdToken(), // Optional, dacă vrei să salvezi token-ul
-      }));
-
-      // Salvează utilizatorul în Redux
-      dispatch(setUser({
-        uid: user.uid,
-        email: user.email,
-      }));
-
-      // Redirecționează utilizatorul către pagina principală
-      navigate('/home');  // Aici schimbăm ruta către Homepage.js
+      await signInWithEmailAndPassword(auth, email, password);
+      // Nu mai trebuie să salvăm manual tokenul sau să facem dispatch
+      // AuthProvider se va ocupa de asta
+      navigate('/home');
     } catch (error) {
-      console.error("Autentificare eșuată:", error.message);
+      setError(error.message);
     }
   };
 

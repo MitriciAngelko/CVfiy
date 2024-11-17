@@ -1,28 +1,57 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logoutUser } from '../firebase'; // Importă funcția de logout
+import { FileText, MessageSquare } from 'lucide-react';
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  // Funcția de logout
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-      localStorage.removeItem('user'); // Înlătură datele utilizatorului din localStorage
-      navigate('/login'); // Redirecționează către pagina de login
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">
+          Bine ați venit la sistemul nostru de rezervări
+        </h1>
+        
+        <p className="text-xl text-gray-600 text-center mb-12">
+          Alegeți metoda preferată pentru a face o rezervare
+        </p>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
-        <h1 className="text-3xl font-bold">Welcome to the Homepage!</h1>
-        <p className="mt-4 text-gray-700">This is the content area of your application.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          {/* Buton pentru rezervare prin formular */}
+          <button
+            onClick={() => navigate('/cv-form')}
+            className="group relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+          >
+            <div className="flex flex-col items-center space-y-4">
+              <div className="p-4 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors duration-300">
+                <FileText size={48} className="text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-800">
+                Rezervare prin Formular
+              </h3>
+              <p className="text-gray-600 text-center">
+                Completați un formular simplu pentru a face rezervarea dvs.
+              </p>
+            </div>
+          </button>
+
+          {/* Buton pentru rezervare conversațională */}
+          <button
+            className="group relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+          >
+            <div className="flex flex-col items-center space-y-4">
+              <div className="p-4 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors duration-300">
+                <MessageSquare size={48} className="text-green-600" />
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-800">
+                Rezervare Conversațională
+              </h3>
+              <p className="text-gray-600 text-center">
+                Discutați cu asistentul nostru virtual pentru a face o rezervare
+              </p>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

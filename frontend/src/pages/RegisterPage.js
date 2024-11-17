@@ -17,7 +17,7 @@ const RegisterPage = () => {
       // Verifică dacă acțiunea s-a finalizat cu succes
       if (register.fulfilled.match(action)) {
         // Dacă înregistrarea a fost realizată cu succes, redirecționează către pagina de login
-        navigate('/login');
+        navigate('/home');
       }
     } catch (error) {
       console.error('Registration failed:', error);

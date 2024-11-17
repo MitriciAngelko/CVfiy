@@ -30,39 +30,8 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar
-      <div className="w-64 bg-gray-800 text-white p-4">
-        <h2 className="text-xl font-bold mb-8">Dashboard</h2>
-        <ul>
-        <li className="mb-6">
-                <button 
-                onClick={() => navigate('/home')} 
-                className="w-full p-2 text-left hover:bg-gray-700 rounded-lg">
-                Home
-                </button>
-          </li>
-          <li className="mb-6">
-            <button 
-              onClick={() => navigate('/profile')} 
-              className="w-full p-2 text-left hover:bg-gray-700 rounded-lg"
-            >
-              Profil
-            </button>
-          </li>
-          <li className="mb-6">
-            <button 
-              onClick={handleLogout}
-              className="w-full p-2 text-left hover:bg-gray-700 rounded-lg"
-            >
-              Logout
-            </button>
-          </li>
-        </ul>
-      </div> */}
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
+      <div className="p-6">
         <h1 className="text-3xl font-bold">Your Profile</h1>
         {userInfo ? (
           <div className="mt-4">
@@ -74,7 +43,6 @@ const ProfilePage = () => {
           <p>Loading...</p>
         )}
       </div>
-    </div>
   );
 };
 

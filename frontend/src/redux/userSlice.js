@@ -1,38 +1,36 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { loginUser, registerUser, logoutUser } from '../firebase';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { createAsyncThunk } from '@reduxjs/toolkit';
 import { auth } from '../firebase';
+import { createUser } from '../services/api';
 
 export const register = createAsyncThunk(
   'auth/register',
-  async ({ email, password }, { rejectWithValue }) => {
+  async ({ email, password }, { dispatch }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
       
-      // Get user information and return only the necessary data (not the whole user object)
-      const user = {
+      await createUser(token);
+
+      // Save user data in localStorage
+      const userData = {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: userCredential.user.displayName,  // if applicable
+        token: token
       };
+      localStorage.setItem('user', JSON.stringify(userData));
 
-      console.log('Token:', await userCredential.user.getIdToken());
-
-      return user;  // Return only the user data you need
+      return userData;
     } catch (error) {
-      return rejectWithValue(error.message);
+      throw error;
     }
   }
 );
 
-
-// Slice-ul de utilizator
-// userSlice.js
 const userSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
+    user: JSON.parse(localStorage.getItem('user')), // Initialize from localStorage
     loading: false,
     error: null
   },
