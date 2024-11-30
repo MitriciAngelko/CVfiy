@@ -1,11 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore } from 'firebase/firestore'; // Import getFirestore
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -30,6 +28,9 @@ export const registerUser = async ({ email, password }) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   return userCredential.user;
 };
+
+const db = getFirestore(app); // Initialize Firestore
+export { db };  // Export the db instance for use in other files
 
 export const logoutUser = async () => {
   await signOut(auth);

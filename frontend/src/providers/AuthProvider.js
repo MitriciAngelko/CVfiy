@@ -1,8 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { auth } from '../firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { setUser, logout } from '../redux/userSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+// Initialize Firebase services
+import { auth } from '../firebase';
 
 export const AuthContext = createContext();
 
@@ -17,7 +21,7 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Ascultător pentru schimbările stării de autentificare
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Utilizatorul este autentificat
         const token = await user.getIdToken();
@@ -32,11 +36,32 @@ const AuthProvider = ({ children }) => {
 
         // Actualizează localStorage
         localStorage.setItem('user', JSON.stringify(userData));
+
+        // Fetch user's role from Firestore
+        const db = getFirestore();
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userRole = userDoc.data().role;
+
+          // If user is an admin, redirect them to the admin page
+          if (userRole === 'admin') {
+            navigate('/admin');
+          } else {
+            // If not admin, stay on the current page or redirect to home
+            if (!PUBLIC_ROUTES.includes(location.pathname)) {
+              navigate('/');
+            }
+          }
+        } else {
+          console.log('User data not found in Firestore');
+        }
       } else {
         // Utilizatorul nu este autentificat
         dispatch(logout());
         localStorage.removeItem('user');
-        
+
         // Verificăm dacă suntem pe o rută care necesită autentificare
         if (!PUBLIC_ROUTES.includes(location.pathname)) {
           navigate('/login');

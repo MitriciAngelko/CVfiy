@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
+import AdminPage from './pages/AdminPage';
 import RegisterPage from './pages/RegisterPage';
 import LogoutPage from './pages/LogoutPage';
 import HomePage from './pages/HomePage';
@@ -8,7 +9,7 @@ import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import './App.css';
 import AuthProvider from './providers/AuthProvider';
-import CVFormPage from './pages/CVFormPage';
+// import CVFormPage from './pages/CVFormPage';
 import ChatPage from './pages/ChatPage';
 import { PublicRoute } from './components/PublicRoute.js';
 
@@ -32,7 +33,7 @@ const App = () => {
                   <Route path="/home" element={<HomePage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/logout" element={<LogoutPage />} />
-                  <Route path="/cv-form" element={<CVFormPage />} />
+                  {/* <Route path="/cv-form" element={<CVFormPage />} /> */}
                   <Route path="/chat" element={<ChatPage />} />
                 </Routes>
               </div>
