@@ -15,14 +15,12 @@ class PdfService {
     try {
       console.log('Starting PDF generation process...');
       
-      // Generăm HTML-ul folosind OpenAI
       console.log('Generating HTML with OpenAI...');
       const html = await openAiService.generateHtml(cvData);
       
       console.log('HTML generated successfully. Creating PDF...');
       const outputPath = path.join(this.tempDir, `${cvId}.pdf`);
 
-      // Opțiuni pentru generarea PDF-ului
       const options = {
         format: 'A4',
         border: {
@@ -34,7 +32,6 @@ class PdfService {
         timeout: 30000
       };
 
-      // Generăm PDF-ul din HTML
       await new Promise((resolve, reject) => {
         pdf.create(html, options).toFile(outputPath, (err, res) => {
           if (err) {
@@ -49,7 +46,6 @@ class PdfService {
 
       console.log('PDF generated. Uploading to Firebase Storage...');
       
-      // Încărcăm în Firebase Storage
       const storagePath = `cvs/${userId}/${cvId}.pdf`;
       await this.storage.bucket().upload(outputPath, {
         destination: storagePath,
@@ -61,7 +57,6 @@ class PdfService {
 
       console.log('Upload successful. Generating download URL...');
       
-      // Obținem URL-ul de download
       const [url] = await this.storage.bucket()
         .file(storagePath)
         .getSignedUrl({
@@ -70,7 +65,6 @@ class PdfService {
           responseDisposition: 'attachment; filename="cv.pdf"'
         });
 
-      // Curățăm fișierul temporar
       fs.unlinkSync(outputPath);
 
       console.log('Process completed successfully');

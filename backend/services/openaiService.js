@@ -38,11 +38,9 @@ class OpenAiService {
 
       let htmlCode = completion.choices[0].message.content;
       
-      // Curățăm codul în caz că GPT adaugă markdown
       htmlCode = htmlCode.replace(/```html\n?/g, '');
       htmlCode = htmlCode.replace(/```\n?/g, '');
       
-      // Ne asigurăm că avem un document HTML complet
       if (!htmlCode.includes('<!DOCTYPE html>')) {
         htmlCode = `<!DOCTYPE html>
 <html>
