@@ -8,9 +8,10 @@ class OpenAiService {
   }
 
   async generateHtml(cvData) {
+    console.log("Cv data ", cvData);
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",

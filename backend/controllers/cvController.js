@@ -9,53 +9,88 @@ const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
 const bucket = bucketName ? admin.storage().bucket(bucketName) : null;
 
 //test 
+const ongoingCreations = new Map();
+
 const createCv = async (req, res) => {
   try {
     const { uid } = req.user;
     const cvData = req.body;
 
-    // Verificăm limita de CV-uri
-    const userCvs = await db.collection('cvs')
-      .where('userId', '==', uid)
-      .get();
+    // Generate a unique key for this creation attempt
+    const creationKey = `${uid}_${Date.now()}`;
 
-    if (userCvs.size >= MAX_CVS_PER_USER) {
-      return res.status(400).json({ 
-        message: `Maximum number of CVs (${MAX_CVS_PER_USER}) reached`
+    // Check if there's already an ongoing creation for this user
+    if (ongoingCreations.has(uid)) {
+      return res.status(429).json({
+        message: 'A CV creation is already in progress. Please wait.'
       });
     }
 
-    // Creăm documentul CV în Firestore
-    const cvRef = await db.collection('cvs').add({
-      userId: uid,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ...cvData,
-      status: 'processing'
-    });
+    // Mark this user as having an ongoing creation
+    ongoingCreations.set(uid, creationKey);
 
-    // Generăm PDF-ul
-    const pdfUrl = await pdfService.generatePdf(cvData, uid, cvRef.id);
+    try {
+      // Verificăm limita de CV-uri
+      const userCvs = await db.collection('cvs')
+        .where('userId', '==', uid)
+        .where('status', '==', 'completed')  // Only count completed CVs
+        .get();
 
-    // Actualizăm documentul cu URL-ul PDF-ului
-    await cvRef.update({
-      pdfUrl,
-      status: 'completed'
-    });
+      if (userCvs.size >= MAX_CVS_PER_USER) {
+        return res.status(400).json({
+          message: `Maximum number of CVs (${MAX_CVS_PER_USER}) reached`
+        });
+      }
 
-    res.status(201).json({ 
-      message: 'CV created successfully',
-      cvId: cvRef.id,
-      pdfUrl
-    });
+      // Start a Firestore transaction to ensure atomicity
+      const cvRef = await db.runTransaction(async (transaction) => {
+        // Create CV document
+        const newCvRef = db.collection('cvs').doc();
+        
+        transaction.set(newCvRef, {
+          userId: uid,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...cvData,
+          status: 'processing'
+        });
+
+        return newCvRef;
+      });
+
+      // Generate PDF
+      const pdfUrl = await pdfService.generatePdf(cvData, uid, cvRef.id);
+
+      // Update document with PDF URL
+      await cvRef.update({
+        pdfUrl,
+        status: 'completed',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      res.status(201).json({
+        message: 'CV created successfully',
+        cvId: cvRef.id,
+        pdfUrl
+      });
+    } finally {
+      // Always clean up the ongoing creation marker
+      if (ongoingCreations.get(uid) === creationKey) {
+        ongoingCreations.delete(uid);
+      }
+    }
   } catch (error) {
     console.error('Error in createCv:', error);
-    res.status(500).json({ 
-      message: 'Error creating CV', 
-      error: error.message 
+    // Clean up the ongoing creation marker in case of error
+    ongoingCreations.delete(uid);
+    
+    res.status(500).json({
+      message: 'Error creating CV',
+      error: error.message
     });
   }
 };
+
 
 const downloadCv = async (req, res) => {
     try {
