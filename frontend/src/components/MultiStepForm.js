@@ -1,4 +1,3 @@
-// src/components/cv-form/MultiStepForm.js
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, GraduationCap, Briefcase, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -7,7 +6,7 @@ import { BasicInfoStep } from './cv-form/steps/BasicInfoStep';
 import { EducationStep } from './cv-form/steps/EducationStep';
 import { ExperienceStep } from './cv-form/steps/ExperienceStep';
 import { useSelector } from 'react-redux';
-import { createCV, downloadCV } from '../services/api';
+import { createCV } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import SuccessModal from './SuccessModal';
@@ -15,14 +14,15 @@ import SuccessModal from './SuccessModal';
 const MultiStepForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
-    basicInfo: {
-      fullName: '',
-      phone: '',
-      email: ''
-    },
+    fullName: '',
+    phone: '',
+    email: '',
     education: [],
-    experience: []
+    workExperience: [], // Changed from 'experience' to match required format
+    skills: [], // Added skills array
+    otherMentions: '' // Added other mentions field
   });
+  
   const [errors, setErrors] = useState({});
   const user = useSelector((state) => state.auth.user);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,9 +38,9 @@ const MultiStepForm = () => {
   const validateStep = () => {
     const newErrors = {};
     if (currentStep === 0) {
-      if (!formData.basicInfo.fullName) newErrors.fullName = 'Name is required';
-      if (!formData.basicInfo.email) newErrors.email = 'Email is required';
-      if (!formData.basicInfo.phone) newErrors.phone = 'Phone is required';
+      if (!formData.fullName) newErrors.fullName = 'Name is required';
+      if (!formData.email) newErrors.email = 'Email is required';
+      if (!formData.phone) newErrors.phone = 'Phone is required';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -59,45 +59,98 @@ const MultiStepForm = () => {
   const updateBasicInfo = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      basicInfo: {
-        ...prev.basicInfo,
-        [field]: value
-      }
+      [field]: value
     }));
   };
 
   const addEntry = (type) => {
+    const newEntry = type === 'education' 
+      ? {
+          institution: '',
+          startDate: '',
+          endDate: ''
+        } 
+      : {
+          company: '',
+          position: '', // Changed from jobTitle to position
+          startDate: '',
+          endDate: ''
+        };
+
     setFormData(prev => ({
       ...prev,
-      [type]: [...prev[type], type === 'education' ? {
-        institution: '',
-        degree: '',
-        startDate: '',
-        endDate: ''
-      } : {
-        jobTitle: '',
-        company: '',
-        startDate: '',
-        endDate: '',
-        description: ''
-      }]
+      [type === 'education' ? 'education' : 'workExperience']: [...prev[type === 'education' ? 'education' : 'workExperience'], newEntry]
     }));
   };
 
   const updateEntry = (type, index, field, value) => {
+    const arrayName = type === 'education' ? 'education' : 'workExperience';
     setFormData(prev => ({
       ...prev,
-      [type]: prev[type].map((item, i) => 
+      [arrayName]: prev[arrayName].map((item, i) => 
         i === index ? { ...item, [field]: value } : item
       )
     }));
   };
 
   const removeEntry = (type, index) => {
+    const arrayName = type === 'education' ? 'education' : 'workExperience';
     setFormData(prev => ({
       ...prev,
-      [type]: prev[type].filter((_, i) => i !== index)
+      [arrayName]: prev[arrayName].filter((_, i) => i !== index)
     }));
+  };
+
+  const handleSubmit = async () => {
+    if (validateStep()) {
+      try {
+        if (!user || !user.token) {
+          throw new Error('No authentication token available');
+        }
+
+        setIsLoading(true);
+        
+        // Format the data according to the required structure
+        const formattedData = {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          education: formData.education,
+          workExperience: formData.workExperience.map(exp => ({
+            company: exp.company,
+            position: exp.position,
+            startDate: exp.startDate,
+            endDate: exp.endDate
+          })),
+          skills: formData.skills || [], // Include empty array if no skills
+          otherMentions: formData.otherMentions || '' // Include empty string if no mentions
+        };
+
+        const response = await createCV(user.token, formattedData);
+        
+        if (!response.pdfUrl || !response.cvId) {
+          throw new Error('Invalid response from server');
+        }
+
+        localStorage.setItem('cvFormData', JSON.stringify(formattedData));
+        localStorage.setItem('lastGeneratedCV', JSON.stringify({
+          id: response.cvId,
+          pdfUrl: response.pdfUrl
+        }));
+        
+        setShowSuccess(true);
+      } catch (error) {
+        console.error('Error in submit process:', error);
+        alert(`Error: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    navigate('/profile');
   };
 
   const renderStep = () => {
@@ -105,7 +158,7 @@ const MultiStepForm = () => {
       case 0:
         return (
           <BasicInfoStep
-            data={formData.basicInfo}
+            data={formData}
             updateData={updateBasicInfo}
             errors={errors}
           />
@@ -122,10 +175,10 @@ const MultiStepForm = () => {
       case 2:
         return (
           <ExperienceStep
-            data={formData.experience}
-            updateEntry={(index, field, value) => updateEntry('experience', index, field, value)}
-            removeEntry={(index) => removeEntry('experience', index)}
-            addEntry={() => addEntry('experience')}
+            data={formData.workExperience}
+            updateEntry={(index, field, value) => updateEntry('workExperience', index, field, value)}
+            removeEntry={(index) => removeEntry('workExperience', index)}
+            addEntry={() => addEntry('workExperience')}
           />
         );
       default:
@@ -133,114 +186,11 @@ const MultiStepForm = () => {
     }
   };
 
-
-  const downloadPDF = async (url) => {
-    try {
-      console.log('Starting PDF download from URL:', url);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/pdf',
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      // Verificăm dacă răspunsul este de tip PDF
-      const contentType = response.headers.get('content-type');
-      console.log('Content Type:', contentType);
-  
-      const blob = await response.blob();
-      console.log('Blob size:', blob.size);
-  
-      if (blob.size === 0) {
-        throw new Error('Received empty PDF file');
-      }
-  
-      // Creăm URL-ul pentru blob
-      const downloadUrl = window.URL.createObjectURL(blob);
-      console.log('Created Blob URL:', downloadUrl);
-  
-      // Creăm și simulăm click pe link-ul de descărcare
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `cv-${Date.now()}.pdf`; // Nume unic pentru fișier
-      link.style.display = 'none';
-      
-      // Adăugăm link-ul în DOM
-      document.body.appendChild(link);
-      
-      // Simulăm click și apoi curățăm
-      link.click();
-      
-      // Ștergem link-ul din DOM după un scurt delay
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 100);
-  
-      return true;
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      alert('Failed to download PDF. Please try again or check console for details.');
-      return false;
-    }
-  };
-  
-
-
-
-  const handleSubmit = async () => {
-    if (validateStep()) {
-      try {
-        if (!user || !user.token) {
-          throw new Error('No authentication token available');
-        }
-  
-        setIsLoading(true);
-        const response = await createCV(user.token, formData);
-        
-        console.log('Server response:', response);
-  
-        if (!response.pdfUrl || !response.cvId) {
-          throw new Error('Invalid response from server');
-        }
-  
-        // Încercăm să descărcăm PDF-ul prin backend
-        // await downloadCV(user.token, response.cvId, response.pdfUrl);
-  
-        // Salvăm în localStorage
-        localStorage.setItem('cvFormData', JSON.stringify(formData));
-        localStorage.setItem('lastGeneratedCV', JSON.stringify({
-          id: response.cvId,
-          pdfUrl: response.pdfUrl
-        }));
-        
-        // Arătăm dialogul de succes
-        setShowSuccess(true);
-      } catch (error) {
-        console.error('Error in submit process:', error);
-        alert(`Error: ${error.message}`);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    navigate('/profile'); // Redirecționare către profil
-  };
-
-
   return (
     <div className="max-w-4xl mx-auto p-6 bg-gray-50">
-        {isLoading && <LoadingSpinner />}
-        <SuccessModal isOpen={showSuccess} onClose={handleSuccessClose} />
-        <StepIndicator currentStep={currentStep} steps={steps} />
+      {isLoading && <LoadingSpinner />}
+      <SuccessModal isOpen={showSuccess} onClose={handleSuccessClose} />
+      <StepIndicator currentStep={currentStep} steps={steps} />
       
       <div className="mt-8 bg-white p-6 rounded-xl shadow-lg">
         <AnimatePresence mode="wait">
