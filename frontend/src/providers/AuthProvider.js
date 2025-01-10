@@ -20,7 +20,9 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // Utilizatorul este autentificat
+        
         const token = await user.getIdToken();
+        console.log(token)
         const userData = {
           uid: user.uid,
           email: user.email,

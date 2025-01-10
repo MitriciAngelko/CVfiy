@@ -3,7 +3,7 @@ import userReducer from './userSlice'; // Asigură-te că acest import este core
 
 const store = configureStore({
   reducer: {
-    auth: userReducer // Asigură-te că reducer-ul pentru auth este corect configurat
+    auth: userReducer,
   }
 });
 
