@@ -168,7 +168,7 @@ class ConversationService {
 2. Email address (validate that it's a proper email format)
 3. Phone number (format: +40xxxxxxxxx or 07xxxxxxxx)
 4. Education (institution name, start date YYYY-MM, end date YYYY-MM)
-5. Work experience for each job (company, position, start date YYYY-MM, end date YYYY-MM)
+5. Work experience for each job (company, position, start date YYYY-MM, end date YYYY-MM, job description)
 6. Additional skills (as a simple list)
 7. Other mentions (optional)
 
@@ -195,7 +195,8 @@ IMPORTANT INSTRUCTIONS:
         "company": "string",
         "position": "string",
         "startDate": "YYYY-MM",
-        "endDate": "YYYY-MM"
+        "endDate": "YYYY-MM",
+        "description": "string"
       }],
       "skills": ["string"],
       "otherMentions": "string"
