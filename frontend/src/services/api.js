@@ -25,6 +25,7 @@ export const createUser = async (token) => {
 };
 
 export const createCV = async (token, cvData) => {
+  console.log(JSON.stringify(cvData));
     try {
       console.log(token)
       console.log('cvData:', cvData);

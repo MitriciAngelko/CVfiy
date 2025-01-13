@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, GraduationCap, Briefcase, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, GraduationCap, Briefcase, ChevronRight, ChevronLeft, Star } from 'lucide-react';
 import { StepIndicator } from './cv-form/form-elements/StepIndicator';
 import { BasicInfoStep } from './cv-form/steps/BasicInfoStep';
 import { EducationStep } from './cv-form/steps/EducationStep';
@@ -10,6 +10,7 @@ import { createCV } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import SuccessModal from './SuccessModal';
+import { SkillsStep } from './SkillsStep';
 
 const MultiStepForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -32,7 +33,8 @@ const MultiStepForm = () => {
   const steps = [
     { name: 'Basic Info', icon: <User size={20} /> },
     { name: 'Education', icon: <GraduationCap size={20} /> },
-    { name: 'Experience', icon: <Briefcase size={20} /> }
+    { name: 'Experience', icon: <Briefcase size={20} /> },
+    { name: 'Skills', icon: <Star size={20} /> }
   ];
 
   const validateStep = () => {
@@ -120,7 +122,8 @@ const MultiStepForm = () => {
             company: exp.company,
             position: exp.position,
             startDate: exp.startDate,
-            endDate: exp.endDate
+            endDate: exp.endDate,
+            description: exp.description
           })),
           skills: formData.skills || [], // Include empty array if no skills
           otherMentions: formData.otherMentions || '' // Include empty string if no mentions
@@ -179,6 +182,13 @@ const MultiStepForm = () => {
             updateEntry={(index, field, value) => updateEntry('workExperience', index, field, value)}
             removeEntry={(index) => removeEntry('workExperience', index)}
             addEntry={() => addEntry('workExperience')}
+          />
+        );
+      case 3:
+        return (
+          <SkillsStep
+            skills={formData.skills}
+            updateSkills={(newSkills) => setFormData(prev => ({ ...prev, skills: newSkills }))}
           />
         );
       default:
